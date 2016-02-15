@@ -1,3 +1,5 @@
+/* add this function in xgboost/src/learner/evaluation-inl.hpp */
+
 typedef std::pair<double, int> prob_rank_pair;
 bool compare_prob_rank_pair (const prob_rank_pair& l, const prob_rank_pair& r) {
   return (l.first > r.first);
