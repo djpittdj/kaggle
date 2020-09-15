@@ -1,4 +1,6 @@
 [Kaggle Airbnb New User Bookings](https://www.kaggle.com/c/airbnb-recruiting-new-user-bookings/overview)
+# Final ranking 
+* 26/1458 (top 2%)
 
 # Preparation of data
 ## "airbnbNDCG" evaluation function
