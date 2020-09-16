@@ -3,6 +3,7 @@ import numpy as np
 import xgboost as xgb
 
 def proc_df(df):
+    """feature engineering based on exploratory analysis"""
     df = df.drop(['PropertyField6', 'GeographicField10A'], axis=1)
     df['Field10'] = df['Field10'].apply(lambda x: x.replace(',', ''))
     df['GeographicField63'] = df['GeographicField63'].replace({' ':'N'})
@@ -35,19 +36,22 @@ combined = pd.concat((train, test), ignore_index=True)
 combined['QuoteConversion_Flag'] = combined['QuoteConversion_Flag'].fillna(0)
 combined = combined[train.columns]
 
+# when the feature is categorical or date-related, add the counts of the categories as a new feature
 for feature in combined.columns:
     if combined[feature].dtype == 'object':
-        print feature
+        print(feature)
         vc = combined[feature].value_counts()
         combined[feature+'_c'] = combined[feature].replace(vc)
         combined[feature] = combined[feature].astype('category').cat.codes.astype('int')
 
 for feature in ['Year', 'Month', 'DayOfWeek', 'Day']:
-    print feature
+    print(feature)
     vc = combined[feature].value_counts()
     combined[feature+'_c'] = combined[feature].replace(vc)
     combined[feature] = combined[feature].astype('category').cat.codes.astype('int')
 
+# using top features based on a previous model, 
+# generate interaction features by mixing every two features
 important_features = pd.read_csv('../py5/feature_importance.csv')
 top_features = important_features['feature'].head(n=20).values
 for i in range(top_features.size-1):
@@ -56,12 +60,13 @@ for i in range(top_features.size-1):
         feature_j = top_features[j]
         if combined[feature_i].unique().size<50 and combined[feature_j].unique().size<50:
             new_feature_name = feature_i + str(':') + feature_j
-            print new_feature_name
+            print(new_feature_name)
             combined[new_feature_name] = combined[feature_i].astype('str') + str(':') + combined[feature_j].astype('str')
             vc = combined[new_feature_name].value_counts()
             combined[new_feature_name+'_c'] = combined[new_feature_name].replace(vc)
             combined[new_feature_name] = combined[new_feature_name].astype('category').cat.codes.astype('int')
 
+# save the engineered datasets
 train = combined.loc[train.index]
 test_index = combined.index.drop(train.index)
 test = combined.loc[test_index]
@@ -72,3 +77,4 @@ features = train.columns
 features = features.drop(['Original_Quote_Date', 'QuoteConversion_Flag', 'QuoteNumber'])
 mat_train = xgb.DMatrix(data=train[features], label=train.QuoteConversion_Flag)
 mat_train.save_binary('train01.DMatrix')
+
